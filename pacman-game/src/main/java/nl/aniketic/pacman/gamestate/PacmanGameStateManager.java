@@ -5,6 +5,7 @@ import nl.aniketic.engine.gamestate.GameStateManager;
 import nl.aniketic.pacman.controls.Key;
 import nl.aniketic.pacman.controls.PacmanKeyHandler;
 import nl.aniketic.pacman.entity.Direction;
+import nl.aniketic.pacman.entity.Pellet;
 import nl.aniketic.pacman.entity.Pacman;
 import nl.aniketic.pacman.entity.Wall;
 
@@ -26,6 +27,7 @@ public class PacmanGameStateManager extends GameStateManager {
     private Pacman pacman;
 
     private List<Wall> walls;
+    private List<Pellet> pellets;
 
     @Override
     protected void startGameState() {
@@ -70,6 +72,11 @@ public class PacmanGameStateManager extends GameStateManager {
         }
 
         movePacman();
+
+        Pellet pellet = getCollisionWithFood(pacman.getScreenX(), pacman.getScreenY());
+        if (pellet != null) {
+            pellet.deactivatePanelComponent();
+        }
     }
 
     private void movePacman() {
@@ -115,6 +122,23 @@ public class PacmanGameStateManager extends GameStateManager {
         return false;
     }
 
+    private Pellet getCollisionWithFood(int screenX, int screenY) {
+        Rectangle pacmanCollisionBody = pacman.getCollisionBody();
+        pacmanCollisionBody = new Rectangle(
+                screenX + pacmanCollisionBody.x,
+                screenY + pacmanCollisionBody.y,
+                pacmanCollisionBody.width,
+                pacmanCollisionBody.height);
+
+        for (Pellet pellet : pellets) {
+            if (pacmanCollisionBody.intersects(pellet.getCollisionBody())) {
+                return pellet;
+            }
+        }
+
+        return null;
+    }
+
     @Override
     protected void updateEndGameState() {
 
@@ -124,11 +148,16 @@ public class PacmanGameStateManager extends GameStateManager {
         map = loadMap("/map/map01.txt");
 
         walls = new ArrayList<>();
+        pellets = new ArrayList<>();
         for (int row=0; row<map.length; row++) {
             for (int col=0; col<map[0].length; col++) {
                 int value = map[row][col];
                 if (value == 1) {
-                    walls.add(new Wall(col, row, 10, 10));
+                    walls.add(new Wall(col, row, MainPanel.OFFSET_X, MainPanel.OFFSET_Y));
+                } else if (value == 2) {
+                    Pellet pellet = new Pellet(col, row, MainPanel.OFFSET_X, MainPanel.OFFSET_Y);
+                    pellet.activatePanelComponent();
+                    pellets.add(pellet);
                 }
             }
         }
