@@ -32,6 +32,10 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private Sound waka;
 
+    private int score;
+    private boolean victory;
+    private boolean gameOver;
+
     @Override
     protected void startGameState() {
         DisplayManager.createDisplay("PAC-MAN");
@@ -43,34 +47,43 @@ public class PacmanGameStateManager extends GameStateManager {
     @Override
     protected void updatePreGameState() {
         Key pressedKey = getPressedKey();
-        if (pressedKey != null) {
-            if (pressedKey == Key.UP && pacman.getDirection() != Direction.UP) {
-                int screenX = pacman.getScreenX();
-                int screenY = pacman.getScreenY() - Pacman.SPEED;
-                if (!isCollisionWithWall(screenX, screenY)) {
-                    pacman.handleUp();
-                }
+
+        if (victory) {
+            System.out.println("You won!");
+
+            if (pressedKey == Key.SPACE) {
+                resetGame();
             }
-            if (pressedKey == Key.DOWN && pacman.getDirection() != Direction.DOWN) {
-                int screenX = pacman.getScreenX();
-                int screenY = pacman.getScreenY() + Pacman.SPEED;
-                if (!isCollisionWithWall(screenX, screenY)) {
-                    pacman.handleDown();
-                }
+
+            return;
+        }
+
+        if (pressedKey == Key.UP && pacman.getDirection() != Direction.UP) {
+            int screenX = pacman.getScreenX();
+            int screenY = pacman.getScreenY() - Pacman.SPEED;
+            if (!isCollisionWithWall(screenX, screenY)) {
+                pacman.handleUp();
             }
-            if (pressedKey == Key.LEFT && pacman.getDirection() != Direction.LEFT) {
-                int screenX = pacman.getScreenX() - Pacman.SPEED;
-                int screenY = pacman.getScreenY();
-                if (!isCollisionWithWall(screenX, screenY)) {
-                    pacman.handleLeft();
-                }
+        }
+        if (pressedKey == Key.DOWN && pacman.getDirection() != Direction.DOWN) {
+            int screenX = pacman.getScreenX();
+            int screenY = pacman.getScreenY() + Pacman.SPEED;
+            if (!isCollisionWithWall(screenX, screenY)) {
+                pacman.handleDown();
             }
-            if (pressedKey == Key.RIGHT && pacman.getDirection() != Direction.RIGHT) {
-                int screenX = pacman.getScreenX() + Pacman.SPEED;
-                int screenY = pacman.getScreenY();
-                if (!isCollisionWithWall(screenX, screenY)) {
-                    pacman.handleRight();
-                }
+        }
+        if (pressedKey == Key.LEFT && pacman.getDirection() != Direction.LEFT) {
+            int screenX = pacman.getScreenX() - Pacman.SPEED;
+            int screenY = pacman.getScreenY();
+            if (!isCollisionWithWall(screenX, screenY)) {
+                pacman.handleLeft();
+            }
+        }
+        if (pressedKey == Key.RIGHT && pacman.getDirection() != Direction.RIGHT) {
+            int screenX = pacman.getScreenX() + Pacman.SPEED;
+            int screenY = pacman.getScreenY();
+            if (!isCollisionWithWall(screenX, screenY)) {
+                pacman.handleRight();
             }
         }
 
@@ -83,10 +96,82 @@ public class PacmanGameStateManager extends GameStateManager {
                 waka.loadClip();
                 waka.play();
             }
+            score++;
 
             pellet.deactivatePanelComponent();
             pellets.remove(pellet);
+
+            if (pellets.isEmpty()) {
+                victory = true;
+            }
         }
+    }
+
+    @Override
+    protected void updateEndGameState() {
+
+    }
+
+    private void resetGame() {
+        pacman.deactivatePanelComponent();
+        gameObjects.remove(pacman);
+        startNewGame();
+    }
+
+    private void startNewGame() {
+        score = 0;
+        victory = false;
+        gameOver = false;
+
+        waka = new Sound("/sound/waka.wav");
+        map = loadMap("/map/map01.txt");
+
+        walls = new ArrayList<>();
+        pellets = new ArrayList<>();
+        for (int row = 0; row < map.length; row++) {
+            for (int col = 0; col < map[0].length; col++) {
+                int value = map[row][col];
+                if (value == 1) {
+                    walls.add(new Wall(col, row, MainPanel.OFFSET_X, MainPanel.OFFSET_Y));
+                } else if (value == 2) {
+                    Pellet pellet = new Pellet(col, row, MainPanel.OFFSET_X, MainPanel.OFFSET_Y);
+                    pellet.activatePanelComponent();
+                    pellets.add(pellet);
+                }
+            }
+        }
+
+        int col = 1;
+        int row = 1;
+        pacman = new Pacman(col * Pacman.SIZE + Pacman.SIZE / 2, row * Pacman.SIZE + Pacman.SIZE / 2);
+        pacman.activatePanelComponent();
+        gameObjects.add(pacman);
+
+        mainPanel = new MainPanel();
+        mainPanel.setMap(map);
+        mainPanel.activatePanelComponent();
+    }
+
+    private int[][] loadMap(String filePath) {
+        List<String> mapLines = getMapLines(filePath);
+        int[][] newMap = mapLines.stream()
+                .map(s -> s.split(" "))
+                .map(s -> Arrays.stream(s).mapToInt(Integer::parseInt).toArray())
+                .toArray(int[][]::new);
+        return newMap;
+    }
+
+    private List<String> getMapLines(String filePath) {
+        List<String> mapLines;
+        try {
+            InputStream inputStream = getClass().getResourceAsStream(filePath);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            mapLines = bufferedReader.lines().collect(Collectors.toList());
+            bufferedReader.close();
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to load map.", e);
+        }
+        return mapLines;
     }
 
     private void movePacman() {
@@ -153,63 +238,6 @@ public class PacmanGameStateManager extends GameStateManager {
         }
 
         return null;
-    }
-
-    @Override
-    protected void updateEndGameState() {
-
-    }
-
-    private void startNewGame() {
-        waka = new Sound("/sound/waka.wav");
-        map = loadMap("/map/map01.txt");
-
-        walls = new ArrayList<>();
-        pellets = new ArrayList<>();
-        for (int row = 0; row < map.length; row++) {
-            for (int col = 0; col < map[0].length; col++) {
-                int value = map[row][col];
-                if (value == 1) {
-                    walls.add(new Wall(col, row, MainPanel.OFFSET_X, MainPanel.OFFSET_Y));
-                } else if (value == 2) {
-                    Pellet pellet = new Pellet(col, row, MainPanel.OFFSET_X, MainPanel.OFFSET_Y);
-                    pellet.activatePanelComponent();
-                    pellets.add(pellet);
-                }
-            }
-        }
-
-        int col = 1;
-        int row = 1;
-        pacman = new Pacman(col * Pacman.SIZE + Pacman.SIZE / 2, row * Pacman.SIZE + Pacman.SIZE / 2);
-        pacman.activatePanelComponent();
-        gameObjects.add(pacman);
-
-        mainPanel = new MainPanel();
-        mainPanel.setMap(map);
-        mainPanel.activatePanelComponent();
-    }
-
-    private int[][] loadMap(String filePath) {
-        List<String> mapLines = getMapLines(filePath);
-        int[][] newMap = mapLines.stream()
-                .map(s -> s.split(" "))
-                .map(s -> Arrays.stream(s).mapToInt(Integer::parseInt).toArray())
-                .toArray(int[][]::new);
-        return newMap;
-    }
-
-    private List<String> getMapLines(String filePath) {
-        List<String> mapLines;
-        try {
-            InputStream inputStream = getClass().getResourceAsStream(filePath);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            mapLines = bufferedReader.lines().collect(Collectors.toList());
-            bufferedReader.close();
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to load map.", e);
-        }
-        return mapLines;
     }
 
     private Key getPressedKey() {
