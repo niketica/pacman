@@ -26,7 +26,7 @@ public class Pacman implements GameObject {
         pacmanPanelComponent = new PacmanPanelComponent(screenX, screenY, SIZE);
         pacmanPanelComponent.loadImages();
         direction = Direction.RIGHT;
-        collisionBody = new Rectangle(1, 1, SIZE-2, SIZE-2);
+        collisionBody = new Rectangle(1, 1, SIZE - 2, SIZE - 2);
     }
 
     @Override

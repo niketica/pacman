@@ -6,6 +6,8 @@ import nl.aniketic.engine.sound.Sound;
 import nl.aniketic.pacman.controls.Key;
 import nl.aniketic.pacman.controls.PacmanKeyHandler;
 import nl.aniketic.pacman.entity.Direction;
+import nl.aniketic.pacman.entity.Ghost;
+import nl.aniketic.pacman.entity.GhostColor;
 import nl.aniketic.pacman.entity.Pacman;
 import nl.aniketic.pacman.entity.Pellet;
 import nl.aniketic.pacman.entity.Wall;
@@ -27,6 +29,7 @@ public class PacmanGameStateManager extends GameStateManager {
     private MainPanel mainPanel;
     private SidePanel sidePanel;
     private Pacman pacman;
+    private Ghost[] ghosts;
 
     private List<Wall> walls;
     private List<Pellet> pellets;
@@ -123,6 +126,12 @@ public class PacmanGameStateManager extends GameStateManager {
     private void resetGame() {
         pacman.deactivatePanelComponent();
         gameObjects.remove(pacman);
+
+        for (Ghost ghost : ghosts) {
+            ghost.deactivatePanelComponent();
+            gameObjects.remove(ghost);
+        }
+
         startNewGame();
     }
 
@@ -155,7 +164,24 @@ public class PacmanGameStateManager extends GameStateManager {
         pacman.activatePanelComponent();
         gameObjects.add(pacman);
 
+        ghosts = new Ghost[4];
+        ghosts[0] = createGhost(12, 14, GhostColor.ORANGE);
+        ghosts[1] = createGhost(13, 14, GhostColor.CYAN);
+        ghosts[2] = createGhost(14, 14, GhostColor.RED);
+        ghosts[3] = createGhost(15, 14, GhostColor.PINK);
+
+        for (Ghost ghost : ghosts) {
+            ghost.activatePanelComponent();
+            gameObjects.add(ghost);
+        }
+
         mainPanel.setMap(map);
+    }
+
+    private Ghost createGhost(int col, int row, GhostColor ghostColor) {
+        int ghostX = MainPanel.OFFSET_X + Wall.WALL_SIZE * col;
+        int ghostY = MainPanel.OFFSET_Y + Wall.WALL_SIZE * row;
+        return new Ghost(ghostX, ghostY, ghostColor);
     }
 
     private int[][] loadMap(String filePath) {
