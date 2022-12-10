@@ -11,6 +11,7 @@ import java.io.IOException;
 public class GhostPanelComponent implements PanelComponent {
 
     private static final int EYE_SIZE = 4;
+    private static final int EYE_FRIGHTENED = 6;
 
     private int screenX;
     private int screenY;
@@ -20,12 +21,19 @@ public class GhostPanelComponent implements PanelComponent {
     private GhostType ghostType;
     private GhostState state;
 
+    private final int maxEatenBobLength;
+    private final int EatenBobLengthIncr;
+    private int currentEatenBobOffset;
+
     public GhostPanelComponent(int screenX, int screenY, GhostType ghostType, Direction direction, GhostState state) {
         this.screenX = screenX;
         this.screenY = screenY;
         this.ghostType = ghostType;
         this.direction = direction;
         this.state = state;
+        maxEatenBobLength = 16;
+        EatenBobLengthIncr = 2;
+        currentEatenBobOffset = 0;
     }
 
     public void loadImages() {
@@ -65,6 +73,8 @@ public class GhostPanelComponent implements PanelComponent {
         if (state == GhostState.FRIGHTENED) {
             BufferedImage image = images[4];
             g2.drawImage(image, screenX, screenY, null);
+        } else if (state == GhostState.EATEN) {
+            drawEyesFrightend(g2);
         } else {
             BufferedImage image = images[ghostType.getImageIndex()];
             g2.drawImage(image, screenX, screenY, null);
@@ -112,6 +122,38 @@ public class GhostPanelComponent implements PanelComponent {
         g2.fillRect(rightEyeX, rightEyeY, EYE_SIZE, EYE_SIZE);
     }
 
+    private void drawEyesFrightend(Graphics2D g2) {
+        g2.setColor(Color.WHITE);
+        int leftEyeX = screenX;
+        int leftEyeY = screenY;
+
+        int rightEyeX = screenX;
+        int rightEyeY = screenY;
+
+        switch (direction) {
+            case UP:
+            case DOWN:
+                leftEyeX += 2;
+                rightEyeX += 15;
+                break;
+            case LEFT:
+                rightEyeX += 13;
+                break;
+            case RIGHT:
+                leftEyeX += 5;
+                rightEyeX += 16;
+                break;
+            default:
+                throw new IllegalStateException("Uknown direction: " + direction);
+        }
+
+        leftEyeY += currentEatenBobOffset;
+        rightEyeY += currentEatenBobOffset;
+
+        g2.fillRect(leftEyeX, leftEyeY, EYE_FRIGHTENED, EYE_FRIGHTENED);
+        g2.fillRect(rightEyeX, rightEyeY, EYE_FRIGHTENED, EYE_FRIGHTENED);
+    }
+
     public void setScreenX(int screenX) {
         this.screenX = screenX;
     }
@@ -126,5 +168,12 @@ public class GhostPanelComponent implements PanelComponent {
 
     public void setState(GhostState state) {
         this.state = state;
+    }
+
+    public void updateEatenBobOffset() {
+        currentEatenBobOffset += EatenBobLengthIncr;
+        if (currentEatenBobOffset > maxEatenBobLength) {
+            currentEatenBobOffset = 0;
+        }
     }
 }

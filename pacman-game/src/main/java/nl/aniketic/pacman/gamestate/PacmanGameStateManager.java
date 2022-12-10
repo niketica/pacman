@@ -132,16 +132,21 @@ public class PacmanGameStateManager extends GameStateManager {
             }
         }
 
-        boolean collisionWithGhost = isCollisionWithGhost(pacmanCollisionBody);
-        if (collisionWithGhost) {
-            lives--;
-            sidePanel.setLives(lives);
+        Ghost collidedGhost = get5CollisionWithGhost(pacmanCollisionBody);
+        if (collidedGhost != null) {
+            GhostState ghostState = collidedGhost.getState();
+            if (ghostState == GhostState.FRIGHTENED) {
+                collidedGhost.setState(GhostState.EATEN);
+            } else if (ghostState != GhostState.EATEN) {
+                lives--;
+                sidePanel.setLives(lives);
 
-            if (lives < 0) {
-                gameOver = true;
-                sidePanel.setGameOver(true);
-            } else {
-                resetPacman();
+                if (lives < 0) {
+                    gameOver = true;
+                    sidePanel.setGameOver(true);
+                } else {
+                    resetPacman();
+                }
             }
         }
 
@@ -150,7 +155,9 @@ public class PacmanGameStateManager extends GameStateManager {
             capsule.deactivatePanelComponent();
             capsules.remove(capsule);
             for (Ghost ghost : ghosts) {
-                ghost.setState(GhostState.FRIGHTENED);
+                if (ghost.getState() != GhostState.EATEN) {
+                    ghost.setState(GhostState.FRIGHTENED);
+                }
             }
             currentGhostFrightenedCount = 0;
         }
@@ -159,7 +166,9 @@ public class PacmanGameStateManager extends GameStateManager {
             currentGhostFrightenedCount++;
             if (currentGhostFrightenedCount >= ghostFrightenedCount) {
                 for (Ghost ghost : ghosts) {
-                    ghost.setState(GhostState.SCATTER);
+                    if (ghost.getState() != GhostState.EATEN) {
+                        ghost.setState(GhostState.SCATTER);
+                    }
                 }
             }
         }
@@ -399,15 +408,15 @@ public class PacmanGameStateManager extends GameStateManager {
         return null;
     }
 
-    private boolean isCollisionWithGhost(Rectangle collisionBody) {
+    private Ghost get5CollisionWithGhost(Rectangle collisionBody) {
         for (Ghost ghost : ghosts) {
             Rectangle ghostCollisionBody =
                     getCollisionBodyOnPosition(ghost.getCollisionBody(), ghost.getScreenX(), ghost.getScreenY());
             if (collisionBody.intersects(ghostCollisionBody)) {
-                return true;
+                return ghost;
             }
         }
-        return false;
+        return null;
     }
 
     private Capsule getCollisionWithCapsule(Rectangle collisionBody) {
