@@ -54,6 +54,8 @@ public class PacmanGameStateManager extends GameStateManager {
     private int currentGhostFrightenedCount = ghostFrightenedCount;
 
     private PathfindingController pathfindingController;
+    private int deadWaitCount = 120;
+    private int currentDeadWaitCount = 0;
 
     @Override
     protected void startGameState() {
@@ -113,58 +115,68 @@ public class PacmanGameStateManager extends GameStateManager {
             }
         }
 
-        movePacman();
-        moveGhosts();
+        if (!pacman.isDead()) {
+            movePacman();
 
-        Rectangle pacmanCollisionBody =
-                getCollisionBodyOnPosition(pacman.getCollisionBody(), pacman.getScreenX(), pacman.getScreenY());
-        Pellet pellet = getCollisionWithFood(pacmanCollisionBody);
-        if (pellet != null) {
-            pellet.deactivatePanelComponent();
-            pellets.remove(pellet);
-            score++;
-            sidePanel.setScore(score);
+            Rectangle pacmanCollisionBody =
+                    getCollisionBodyOnPosition(pacman.getCollisionBody(), pacman.getScreenX(), pacman.getScreenY());
+            Pellet pellet = getCollisionWithFood(pacmanCollisionBody);
+            if (pellet != null) {
+                pellet.deactivatePanelComponent();
+                pellets.remove(pellet);
+                score++;
+                sidePanel.setScore(score);
 
-            if (pellets.isEmpty()) {
-                victory = true;
-                sidePanel.setVictory(true);
-            }
+                if (pellets.isEmpty()) {
+                    victory = true;
+                    sidePanel.setVictory(true);
+                }
 
-            if (!waka.isRunning()) {
-                waka.loadClip();
-                waka.play();
-            }
-        }
-
-        Ghost collidedGhost = get5CollisionWithGhost(pacmanCollisionBody);
-        if (collidedGhost != null) {
-            GhostState ghostState = collidedGhost.getState();
-            if (ghostState == GhostState.FRIGHTENED) {
-                collidedGhost.setState(GhostState.EATEN);
-            } else if (ghostState != GhostState.EATEN) {
-                lives--;
-                sidePanel.setLives(lives);
-
-                if (lives < 0) {
-                    gameOver = true;
-                    sidePanel.setGameOver(true);
-                } else {
-                    resetPacman();
+                if (!waka.isRunning()) {
+                    waka.loadClip();
+                    waka.play();
                 }
             }
-        }
 
-        Capsule capsule = getCollisionWithCapsule(pacmanCollisionBody);
-        if (capsule != null) {
-            capsule.deactivatePanelComponent();
-            capsules.remove(capsule);
-            for (Ghost ghost : ghosts) {
-                if (ghost.getState() != GhostState.EATEN) {
-                    ghost.setState(GhostState.FRIGHTENED);
+            Ghost collidedGhost = get5CollisionWithGhost(pacmanCollisionBody);
+            if (collidedGhost != null) {
+                GhostState ghostState = collidedGhost.getState();
+                if (ghostState == GhostState.FRIGHTENED) {
+                    collidedGhost.setState(GhostState.EATEN);
+                } else if (ghostState != GhostState.EATEN) {
+                    pacman.setDead(true);
+                    lives--;
+                    sidePanel.setLives(lives);
+
+                    if (lives < 0) {
+                        gameOver = true;
+                        sidePanel.setGameOver(true);
+                    }
                 }
             }
-            currentGhostFrightenedCount = 0;
+
+            Capsule capsule = getCollisionWithCapsule(pacmanCollisionBody);
+            if (capsule != null) {
+                capsule.deactivatePanelComponent();
+                capsules.remove(capsule);
+                for (Ghost ghost : ghosts) {
+                    if (ghost.getState() != GhostState.EATEN) {
+                        ghost.setState(GhostState.FRIGHTENED);
+                    }
+                }
+                currentGhostFrightenedCount = 0;
+            }
+            moveGhosts();
+        } else {
+            if (currentDeadWaitCount >= deadWaitCount) {
+                currentDeadWaitCount = 0;
+                pacman.setDead(false);
+                resetPacman();
+            } else {
+                currentDeadWaitCount++;
+            }
         }
+
 
         if (currentGhostFrightenedCount < ghostFrightenedCount) {
             currentGhostFrightenedCount++;
@@ -404,7 +416,8 @@ public class PacmanGameStateManager extends GameStateManager {
         if (!collision && !ghost.isMoving()) {
             ghost.setDestinationX(potentialX);
             ghost.setDestinationY(potentialY);
-        } if (ghost.getState() == GhostState.FRIGHTENED && collision) {
+        }
+        if (ghost.getState() == GhostState.FRIGHTENED && collision) {
             // TODO just a random direction for now.
             Direction nextDirection = Direction.values()[new Random().nextInt(4)];
             ghost.setDirection(nextDirection);
@@ -522,7 +535,8 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private int getCol(Ghost ghost) {
         Rectangle collisionBody = ghost.getCollisionBody();
-        Rectangle collisionBodyOnPosition = getCollisionBodyOnPosition(collisionBody, ghost.getScreenX(), ghost.getScreenY());
+        Rectangle collisionBodyOnPosition =
+                getCollisionBodyOnPosition(collisionBody, ghost.getScreenX(), ghost.getScreenY());
 
         int screenX;
         int col;
@@ -539,7 +553,8 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private int getRow(Ghost ghost) {
         Rectangle collisionBody = ghost.getCollisionBody();
-        Rectangle collisionBodyOnPosition = getCollisionBodyOnPosition(collisionBody, ghost.getScreenX(), ghost.getScreenY());
+        Rectangle collisionBodyOnPosition =
+                getCollisionBodyOnPosition(collisionBody, ghost.getScreenX(), ghost.getScreenY());
 
         int screenY;
         int row;

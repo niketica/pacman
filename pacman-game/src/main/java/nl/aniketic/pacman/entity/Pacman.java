@@ -18,6 +18,7 @@ public class Pacman implements GameObject {
     private Direction direction;
     private int screenX;
     private int screenY;
+    private boolean dead;
 
     public Pacman(int screenX, int screenY) {
         this.screenX = screenX;
@@ -141,5 +142,14 @@ public class Pacman implements GameObject {
 
     public Direction getDirection() {
         return direction;
+    }
+
+    public boolean isDead() {
+        return dead;
+    }
+
+    public void setDead(boolean dead) {
+        this.dead = dead;
+        pacmanPanelComponent.setDead(dead);
     }
 }

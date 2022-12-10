@@ -14,29 +14,44 @@ public class PacmanPanelComponent implements PanelComponent {
     private int screenX;
     private int screenY;
 
-    private BufferedImage[] images;
-    private int imageIndex;
+    private BufferedImage[] frames;
+    private BufferedImage[] deathFrames;
+    private int framesIndex;
+    private int deathFramesIndex;
+    private boolean dead;
 
     public PacmanPanelComponent(int col, int row, int size) {
         this.screenX = col;
         this.screenY = row;
         this.size = size;
-        this.imageIndex = 0;
+        this.framesIndex = 0;
+        this.deathFramesIndex = 0;
     }
 
     public void loadImages() {
-        images = new BufferedImage[6];
+        frames = new BufferedImage[6];
         BufferedImage image_1 = loadImage("/img/pacman_1.png");
         BufferedImage image_2 = loadImage("/img/pacman_2.png");
         BufferedImage image_3 = loadImage("/img/pacman_3.png");
         BufferedImage image_4 = loadImage("/img/pacman_4.png");
 
-        images[0] = image_1;
-        images[1] = image_2;
-        images[2] = image_3;
-        images[3] = image_4;
-        images[4] = image_3;
-        images[5] = image_2;
+        frames[0] = image_1;
+        frames[1] = image_2;
+        frames[2] = image_3;
+        frames[3] = image_4;
+        frames[4] = image_3;
+        frames[5] = image_2;
+
+        deathFrames = new BufferedImage[4];
+        BufferedImage image_5 = loadImage("/img/pacman_5.png");
+        BufferedImage image_6 = loadImage("/img/pacman_6.png");
+        BufferedImage image_7 = loadImage("/img/pacman_7.png");
+        BufferedImage image_8 = loadImage("/img/pacman_8.png");
+
+        deathFrames[0] = image_5;
+        deathFrames[1] = image_6;
+        deathFrames[2] = image_7;
+        deathFrames[3] = image_8;
     }
 
     private BufferedImage loadImage(String path) {
@@ -69,21 +84,32 @@ public class PacmanPanelComponent implements PanelComponent {
 
     @Override
     public void paintComponent(Graphics2D g2) {
-        BufferedImage image = images[imageIndex];
-        g2.drawImage(image, screenX, screenY, null);
+        if (dead) {
+            if (deathFramesIndex < deathFrames.length) {
+                BufferedImage image = deathFrames[deathFramesIndex];
+                g2.drawImage(image, screenX, screenY, null);
+            }
+        } else {
+            BufferedImage image = frames[framesIndex];
+            g2.drawImage(image, screenX, screenY, null);
+        }
     }
 
     public void updateImageFrame() {
-        imageIndex++;
-        if (imageIndex > images.length - 1) {
-            imageIndex = 0;
+        framesIndex++;
+        if (framesIndex > frames.length - 1) {
+            framesIndex = 0;
+        }
+
+        if (dead && deathFramesIndex < deathFrames.length) {
+            deathFramesIndex++;
         }
     }
 
     public void rotate(int degrees) {
-        for (int i = 0; i < images.length; i++) {
-            BufferedImage image = images[i];
-            images[i] = rotate(image, degrees);
+        for (int i = 0; i < frames.length; i++) {
+            BufferedImage image = frames[i];
+            frames[i] = rotate(image, degrees);
         }
     }
 
@@ -93,5 +119,10 @@ public class PacmanPanelComponent implements PanelComponent {
 
     public void setScreenY(int screenY) {
         this.screenY = screenY;
+    }
+
+    public void setDead(boolean dead) {
+        this.dead = dead;
+        framesIndex = 0;
     }
 }
