@@ -24,7 +24,9 @@ public class GamePanel extends JPanel {
         super.paintComponent(g);
 
         Graphics2D g2 = (Graphics2D) g;
-        PANEL_COMPONENTS.forEach(panelComponent -> panelComponent.paintComponent(g2));
+        // TODO figure out how to correctly load components runtime - In the mean time just a defensive copy will do.
+        List<PanelComponent> defensiveCopy = new ArrayList<>(PANEL_COMPONENTS);
+        defensiveCopy.forEach(panelComponent -> panelComponent.paintComponent(g2));
 
         g.dispose();
     }

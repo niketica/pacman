@@ -25,6 +25,7 @@ public class PacmanGameStateManager extends GameStateManager {
     private PacmanKeyHandler keyListener;
     private int[][] map;
     private MainPanel mainPanel;
+    private SidePanel sidePanel;
     private Pacman pacman;
 
     private List<Wall> walls;
@@ -41,6 +42,12 @@ public class PacmanGameStateManager extends GameStateManager {
         DisplayManager.createDisplay("PAC-MAN");
         keyListener = new PacmanKeyHandler();
         DisplayManager.addKeyListener(keyListener);
+
+        mainPanel = new MainPanel();
+        mainPanel.activatePanelComponent();
+        sidePanel = new SidePanel();
+        sidePanel.activatePanelComponent();
+
         startNewGame();
     }
 
@@ -97,6 +104,7 @@ public class PacmanGameStateManager extends GameStateManager {
                 waka.play();
             }
             score++;
+            sidePanel.setScore(score);
 
             pellet.deactivatePanelComponent();
             pellets.remove(pellet);
@@ -147,9 +155,7 @@ public class PacmanGameStateManager extends GameStateManager {
         pacman.activatePanelComponent();
         gameObjects.add(pacman);
 
-        mainPanel = new MainPanel();
         mainPanel.setMap(map);
-        mainPanel.activatePanelComponent();
     }
 
     private int[][] loadMap(String filePath) {
