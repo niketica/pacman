@@ -33,6 +33,13 @@ public class Sound {
     }
 
     public void stop() {
+        if (clip == null) {
+            return;
+        }
         clip.stop();
+    }
+
+    public boolean isRunning() {
+        return clip != null && clip.isRunning();
     }
 }

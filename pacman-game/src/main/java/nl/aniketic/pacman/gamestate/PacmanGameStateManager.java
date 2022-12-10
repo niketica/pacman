@@ -2,6 +2,7 @@ package nl.aniketic.pacman.gamestate;
 
 import nl.aniketic.engine.display.DisplayManager;
 import nl.aniketic.engine.gamestate.GameStateManager;
+import nl.aniketic.engine.sound.Sound;
 import nl.aniketic.pacman.controls.Key;
 import nl.aniketic.pacman.controls.PacmanKeyHandler;
 import nl.aniketic.pacman.entity.Direction;
@@ -28,6 +29,9 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private List<Wall> walls;
     private List<Pellet> pellets;
+
+    private Sound waka;
+    private boolean wakaPlaying;
 
     @Override
     protected void startGameState() {
@@ -75,7 +79,14 @@ public class PacmanGameStateManager extends GameStateManager {
 
         Pellet pellet = getCollisionWithFood(pacman.getScreenX(), pacman.getScreenY());
         if (pellet != null) {
+
+            if (!waka.isRunning()) {
+                waka.loadClip();
+                waka.play();
+            }
+
             pellet.deactivatePanelComponent();
+            pellets.remove(pellet);
         }
     }
 
@@ -145,6 +156,7 @@ public class PacmanGameStateManager extends GameStateManager {
     }
 
     private void startNewGame() {
+        waka = new Sound("/sound/waka.wav");
         map = loadMap("/map/map01.txt");
 
         walls = new ArrayList<>();
@@ -162,15 +174,15 @@ public class PacmanGameStateManager extends GameStateManager {
             }
         }
 
-        mainPanel = new MainPanel();
-        mainPanel.setMap(map);
-        mainPanel.activatePanelComponent();
-
         int col = 1;
         int row = 1;
         pacman = new Pacman(col * Pacman.SIZE + Pacman.SIZE / 2, row * Pacman.SIZE + Pacman.SIZE / 2);
         pacman.activatePanelComponent();
         gameObjects.add(pacman);
+
+        mainPanel = new MainPanel();
+        mainPanel.setMap(map);
+        mainPanel.activatePanelComponent();
     }
 
     private int[][] loadMap(String filePath) {
