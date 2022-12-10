@@ -1,6 +1,10 @@
 package nl.aniketic.pacman.gamestate;
 
 import nl.aniketic.engine.gamestate.GameObject;
+import nl.aniketic.pacman.pathfinding.Node;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainPanel implements GameObject {
 
@@ -29,5 +33,13 @@ public class MainPanel implements GameObject {
 
     public void setMap(int[][] map) {
         mainPanelComponent.setMap(map);
+    }
+
+    public void cleanPathList() {
+        mainPanelComponent.cleanPathList();
+    }
+
+    public void addPath(List<Node> path) {
+        mainPanelComponent.addPath(path);
     }
 }

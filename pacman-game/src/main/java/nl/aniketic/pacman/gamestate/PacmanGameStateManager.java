@@ -13,6 +13,8 @@ import nl.aniketic.pacman.entity.GhostType;
 import nl.aniketic.pacman.entity.Pacman;
 import nl.aniketic.pacman.entity.Pellet;
 import nl.aniketic.pacman.entity.Wall;
+import nl.aniketic.pacman.pathfinding.Node;
+import nl.aniketic.pacman.pathfinding.PathfindingController;
 
 import java.awt.Rectangle;
 import java.io.BufferedReader;
@@ -22,24 +24,23 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 public class PacmanGameStateManager extends GameStateManager {
 
-    private static final int PACMAN_START_COL = 1;
-    private static final int PACMAN_START_ROW = 1;
+    private static final int PACMAN_START_COL = 13;
+    private static final int PACMAN_START_ROW = 23;
 
     private PacmanKeyHandler keyListener;
     private int[][] map;
     private MainPanel mainPanel;
     private SidePanel sidePanel;
     private Pacman pacman;
-    private Ghost[] ghosts;
 
     private List<Wall> walls;
     private List<Pellet> pellets;
     private List<Capsule> capsules;
+    private List<Ghost> ghosts;
 
     private Sound waka;
 
@@ -50,6 +51,8 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private final int ghostFrightenedCount = 300;
     private int currentGhostFrightenedCount = ghostFrightenedCount;
+
+    private PathfindingController pathfindingController;
 
     @Override
     protected void startGameState() {
@@ -209,8 +212,10 @@ public class PacmanGameStateManager extends GameStateManager {
         sidePanel.setScore(score);
         sidePanel.setLives(lives);
 
-        waka = new Sound("/sound/waka.wav");
+        waka = new Sound("/sound/wakawaka.wav");
         map = loadMap("/map/map01.txt");
+
+        pathfindingController = new PathfindingController(map);
 
         walls = new ArrayList<>();
         pellets = new ArrayList<>();
@@ -231,11 +236,11 @@ public class PacmanGameStateManager extends GameStateManager {
         pacman.activatePanelComponent();
         gameObjects.add(pacman);
 
-        ghosts = new Ghost[4];
-        ghosts[0] = createGhost(14, 11, GhostType.CLYDE);
-        ghosts[1] = createGhost(18, 14, GhostType.INKY);
-        ghosts[2] = createGhost(8, 14, GhostType.BLINKY);
-        ghosts[3] = createGhost(16, 17, GhostType.PINKY);
+        ghosts = new ArrayList<>();
+        ghosts.add(createGhost(14, 11, GhostType.CLYDE));
+        ghosts.add(createGhost(18, 14, GhostType.INKY));
+        ghosts.add(createGhost(8, 14, GhostType.BLINKY));
+        ghosts.add(createGhost(16, 17, GhostType.PINKY));
         for (Ghost ghost : ghosts) {
             ghost.activatePanelComponent();
             gameObjects.add(ghost);
@@ -336,7 +341,30 @@ public class PacmanGameStateManager extends GameStateManager {
     }
 
     private void moveGhosts() {
+        mainPanel.cleanPathList();
+
         for (Ghost ghost : ghosts) {
+            Direction nextDirection = null;
+
+            if (ghost.getState() == GhostState.EATEN) {
+                List<Node> pathToCenter = getPathToCenter(ghost);
+                if (pathToCenter != null && !pathToCenter.isEmpty()) {
+                    nextDirection = getDirection(pathToCenter);
+                }
+            } else if (ghost.getState() == GhostState.FRIGHTENED) {
+
+            } else {
+                List<Node> pathToPacman = getPathToPacman(ghost, pacman);
+                if (pathToPacman != null && !pathToPacman.isEmpty()) {
+                    mainPanel.addPath(pathToPacman);
+                    nextDirection = getDirection(pathToPacman);
+                }
+            }
+
+            if (nextDirection != null) {
+                ghost.setDirection(nextDirection);
+            }
+
             moveGhost(ghost);
         }
     }
@@ -370,12 +398,7 @@ public class PacmanGameStateManager extends GameStateManager {
         Rectangle collisionBody = getCollisionBodyOnPosition(ghost.getCollisionBody(), potentialX, potentialY);
         boolean collision = isCollisionWithWall(collisionBody);
 
-        if (collision) {
-            // TODO Add ghost AI - Just random movement for now
-            Random random = new Random();
-            Direction nextDirection = (Direction) Arrays.stream(Direction.values()).toArray()[random.nextInt(4)];
-            ghost.setDirection(nextDirection);
-        } else {
+        if (!collision) {
             ghost.setScreenX(potentialX);
             ghost.setScreenY(potentialY);
         }
@@ -434,4 +457,126 @@ public class PacmanGameStateManager extends GameStateManager {
                 .findAny().orElse(null);
     }
 
+    public List<Node> getPathToCenter(Ghost ghost) {
+        int ghostCol = getCol(ghost);
+        int ghostRow = getRow(ghost);
+
+        pathfindingController.resetNodes();
+
+        Node ghostNode = pathfindingController.getNode(ghostCol, ghostRow);
+        Node centerNode = pathfindingController.getNode(14, 14);
+
+        if (ghostNode != null && centerNode != null) {
+            List<Node> path = getPath(ghostNode, centerNode);
+            if (path != null) {
+                path.add(ghostNode);
+            }
+            return path;
+        }
+
+        return null;
+    }
+
+    public List<Node> getPathToPacman(Ghost ghost, Pacman pacman) {
+        int ghostCol = getCol(ghost);
+        int ghostRow = getRow(ghost);
+        int pacmanCol = getCol(pacman.getScreenX(), ghost.getDirection());
+        int pacmanRow = getRow(pacman.getScreenY(), ghost.getDirection());
+
+        pathfindingController.resetNodes();
+        Node ghostNode = pathfindingController.getNode(ghostCol, ghostRow);
+        Node pacmanNode = pathfindingController.getNode(pacmanCol, pacmanRow);
+
+        if (ghostNode == null || pacmanNode == null) {
+            return null;
+        }
+
+        ghostNode.sethValue(ghostNode.getDistance(pacmanNode));
+        ghostNode.setgValue(0);
+
+        List<Node> path = pathfindingController.getPath(ghostNode, pacmanNode);
+        if (path != null) {
+            path.add(ghostNode);
+        }
+        return path;
+    }
+
+    public List<Node> getPath(Node startNode, Node targetNode) {
+        pathfindingController.resetNodes();
+
+        List<Node> path = pathfindingController.getPath(startNode, targetNode);
+        if (path != null && !path.isEmpty()) {
+            mainPanel.addPath(path);
+            return path;
+        }
+
+        return null;
+    }
+
+    private int getCol(Ghost ghost) {
+        Rectangle collisionBody = ghost.getCollisionBody();
+        Rectangle collisionBodyOnPosition = getCollisionBodyOnPosition(collisionBody, ghost.getScreenX(), ghost.getScreenY());
+
+        int screenX;
+        int col;
+        if (ghost.getDirection() == Direction.LEFT) {
+            screenX = collisionBodyOnPosition.x + collisionBodyOnPosition.width;
+            col = (screenX - MainPanel.OFFSET_X) / Wall.WALL_SIZE;
+        } else {
+            screenX = collisionBodyOnPosition.x;
+            col = (screenX - MainPanel.OFFSET_X) / Wall.WALL_SIZE;
+        }
+
+        return col;
+    }
+
+    private int getRow(Ghost ghost) {
+        Rectangle collisionBody = ghost.getCollisionBody();
+        Rectangle collisionBodyOnPosition = getCollisionBodyOnPosition(collisionBody, ghost.getScreenX(), ghost.getScreenY());
+
+        int screenY;
+        int row;
+        if (ghost.getDirection() == Direction.UP) {
+            screenY = collisionBodyOnPosition.y + collisionBodyOnPosition.height;
+            row = (screenY - MainPanel.OFFSET_X) / Wall.WALL_SIZE;
+        } else {
+            screenY = collisionBodyOnPosition.y;
+            row = (screenY - MainPanel.OFFSET_X) / Wall.WALL_SIZE;
+        }
+
+        return row;
+    }
+
+    private int getCol(int screenX, Direction direction) {
+        return (screenX - MainPanel.OFFSET_X + (Wall.WALL_SIZE / 2)) / Wall.WALL_SIZE;
+    }
+
+    private int getRow(int screenY, Direction direction) {
+        return (screenY - MainPanel.OFFSET_Y + (Wall.WALL_SIZE / 2)) / Wall.WALL_SIZE;
+    }
+
+    private Direction getDirection(List<Node> path) {
+        if (path == null || path.size() < 2) {
+            return null;
+        }
+        Node target = path.get(path.size() - 2);
+        Node start = path.get(path.size() - 1);
+
+        int deltaCol = start.getCol() - target.getCol();
+        int deltaRow = start.getRow() - target.getRow();
+        if (deltaCol < 0) {
+            return Direction.RIGHT;
+        }
+        if (deltaCol > 0) {
+            return Direction.LEFT;
+        }
+        if (deltaRow < 0) {
+            return Direction.DOWN;
+        }
+        if (deltaRow > 0) {
+            return Direction.UP;
+        }
+
+        return null;
+    }
 }

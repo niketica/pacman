@@ -1,9 +1,12 @@
 package nl.aniketic.pacman.gamestate;
 
 import nl.aniketic.engine.display.PanelComponent;
+import nl.aniketic.pacman.pathfinding.Node;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainPanelComponent implements PanelComponent {
 
@@ -14,6 +17,8 @@ public class MainPanelComponent implements PanelComponent {
     private final int screenY;
 
     private int[][] map;
+
+    private List<List<Node>> pathList;
 
     public MainPanelComponent(int screenX, int screenY) {
         this.screenX = screenX;
@@ -31,6 +36,21 @@ public class MainPanelComponent implements PanelComponent {
                 int value = map[row][col];
                 if (value == 1) {
                     drawWall(g2, row, col);
+                }
+            }
+        }
+
+//        drawPaths(g2);
+    }
+
+    private void drawPaths(Graphics2D g2) {
+        if (pathList != null) {
+            for (List<Node> path : pathList) {
+                for (Node node : path) {
+                    g2.setColor(Color.RED);
+                    int nodeX = screenX + node.getCol() * BLOCK_SIZE;
+                    int nodeY = screenY + node.getRow() * BLOCK_SIZE;
+                    g2.fillRect(nodeX, nodeY, BLOCK_SIZE, BLOCK_SIZE);
                 }
             }
         }
@@ -77,5 +97,16 @@ public class MainPanelComponent implements PanelComponent {
 
     public void setMap(int[][] map) {
         this.map = map;
+    }
+
+    public void cleanPathList() {
+        pathList = new ArrayList<>();
+    }
+
+    public void addPath(List<Node> path) {
+        if (pathList == null) {
+            pathList = new ArrayList<>();
+        }
+        pathList.add(path);
     }
 }

@@ -1,6 +1,7 @@
 package nl.aniketic.pacman.entity;
 
 import nl.aniketic.engine.gamestate.GameObject;
+import nl.aniketic.pacman.pathfinding.Node;
 
 import java.awt.Rectangle;
 
@@ -18,6 +19,9 @@ public class Ghost implements GameObject {
     private Direction direction;
     private GhostState state;
     private int currentEatenBobCount;
+
+    private Node previousNode;
+    private Node currentNode;
 
     public Ghost(int screenX, int screenY, GhostType ghostType) {
         this.screenX = screenX;
@@ -91,5 +95,18 @@ public class Ghost implements GameObject {
 
     public GhostState getState() {
         return state;
+    }
+
+    public Node getPreviousNode() {
+        return previousNode;
+    }
+
+    public Node getCurrentNode() {
+        return currentNode;
+    }
+
+    public void setCurrentNode(Node currentNode) {
+        this.previousNode = this.currentNode;
+        this.currentNode = currentNode;
     }
 }
