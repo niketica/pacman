@@ -1,11 +1,10 @@
 package nl.aniketic.pacman.entity;
 
 import nl.aniketic.engine.gamestate.GameObject;
-import nl.aniketic.pacman.controls.Key;
 
 import java.awt.Rectangle;
 
-public class Pacman extends GameObject {
+public class Pacman implements GameObject {
 
     public static final int SIZE = 20;
     public static final int SPEED = 3;
@@ -26,7 +25,6 @@ public class Pacman extends GameObject {
 
         pacmanPanelComponent = new PacmanPanelComponent(screenX, screenY, SIZE);
         pacmanPanelComponent.loadImages();
-        panelComponent = pacmanPanelComponent;
         direction = Direction.RIGHT;
         collisionBody = new Rectangle(1, 1, SIZE-2, SIZE-2);
     }
@@ -39,6 +37,16 @@ public class Pacman extends GameObject {
         } else {
             currentFrameUpdateCount++;
         }
+    }
+
+    @Override
+    public void activatePanelComponent() {
+        pacmanPanelComponent.activate();
+    }
+
+    @Override
+    public void deactivatePanelComponent() {
+        pacmanPanelComponent.deactivate();
     }
 
     public void handleUp() {

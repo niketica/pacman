@@ -1,22 +1,10 @@
 package nl.aniketic.engine.gamestate;
 
-import nl.aniketic.engine.display.PanelComponent;
+public interface GameObject {
 
-public abstract class GameObject {
+    void update();
 
-    protected PanelComponent panelComponent;
+    void activatePanelComponent();
 
-    public void activatePanelComponent() {
-        if (panelComponent != null) {
-            panelComponent.activate();
-        }
-    }
-
-    public void deactivatePanelComponent() {
-        if (panelComponent != null) {
-            panelComponent.deactivate();
-        }
-    }
-
-    public abstract void update();
+    void deactivatePanelComponent();
 }

@@ -7,7 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-public class PacmanPanelComponent extends PanelComponent {
+public class PacmanPanelComponent implements PanelComponent {
 
     private final int size;
 
@@ -87,22 +87,10 @@ public class PacmanPanelComponent extends PanelComponent {
         }
     }
 
-    @Override
-    public int getScreenX() {
-        return screenX;
-    }
-
-    @Override
     public void setScreenX(int screenX) {
         this.screenX = screenX;
     }
 
-    @Override
-    public int getScreenY() {
-        return screenY;
-    }
-
-    @Override
     public void setScreenY(int screenY) {
         this.screenY = screenY;
     }

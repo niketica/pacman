@@ -5,13 +5,14 @@ import nl.aniketic.engine.display.PanelComponent;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-public class MainPanelComponent extends PanelComponent {
+public class MainPanelComponent implements PanelComponent {
 
-    private static final int BLOCK_SIZE = 20;
+    public static final int BLOCK_SIZE = 20;
     public static final int WALL_WIDTH = 2;
 
-    private int screenX;
-    private int screenY;
+    private final int screenX;
+    private final int screenY;
+
     private int[][] map;
 
     public MainPanelComponent(int screenX, int screenY) {
@@ -33,8 +34,6 @@ public class MainPanelComponent extends PanelComponent {
                 }
             }
         }
-
-//        drawGrid(g2);
     }
 
     private void drawWall(Graphics2D g2, int row, int col) {
@@ -73,16 +72,6 @@ public class MainPanelComponent extends PanelComponent {
             if (valueRight == 1) {
                 g2.fillRect(x1 + BLOCK_SIZE - WALL_WIDTH, y1 + WALL_WIDTH, WALL_WIDTH, BLOCK_SIZE-WALL_WIDTH*2);
             }
-        }
-    }
-
-    private void drawGrid(Graphics2D g2) {
-        g2.setColor(Color.WHITE);
-        for (int row=0; row<=map.length; row++) {
-            for (int col=0; col<=map[0].length; col++) {
-                g2.drawLine(screenX + col * BLOCK_SIZE, screenY, screenX + col * BLOCK_SIZE, screenY + map.length * BLOCK_SIZE);
-            }
-            g2.drawLine(screenX, screenY + row * BLOCK_SIZE, screenX + map[0].length * BLOCK_SIZE, screenY + row * BLOCK_SIZE);
         }
     }
 

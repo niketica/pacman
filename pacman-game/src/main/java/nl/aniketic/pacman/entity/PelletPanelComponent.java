@@ -5,10 +5,10 @@ import nl.aniketic.engine.display.PanelComponent;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-public class PelletPanelComponent extends PanelComponent {
+public class PelletPanelComponent implements PanelComponent {
 
-    private int screenX;
-    private int screenY;
+    private final int screenX;
+    private final int screenY;
 
     public PelletPanelComponent(int screenX, int screenY) {
         this.screenX = screenX;
