@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class PacmanGameStateManager extends GameStateManager {
@@ -403,6 +404,10 @@ public class PacmanGameStateManager extends GameStateManager {
         if (!collision && !ghost.isMoving()) {
             ghost.setDestinationX(potentialX);
             ghost.setDestinationY(potentialY);
+        } if (ghost.getState() == GhostState.FRIGHTENED && collision) {
+            // TODO just a random direction for now.
+            Direction nextDirection = Direction.values()[new Random().nextInt(4)];
+            ghost.setDirection(nextDirection);
         }
     }
 
