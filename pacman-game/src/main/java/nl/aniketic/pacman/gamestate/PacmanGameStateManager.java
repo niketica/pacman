@@ -350,6 +350,8 @@ public class PacmanGameStateManager extends GameStateManager {
                 List<Node> pathToCenter = getPathToCenter(ghost);
                 if (pathToCenter != null && !pathToCenter.isEmpty()) {
                     nextDirection = getDirection(pathToCenter);
+                } else {
+                    ghost.setState(GhostState.SCATTER);
                 }
             } else if (ghost.getState() == GhostState.FRIGHTENED) {
 
