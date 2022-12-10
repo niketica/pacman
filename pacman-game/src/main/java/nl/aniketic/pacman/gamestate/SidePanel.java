@@ -11,6 +11,7 @@ public class SidePanel implements GameObject {
 
     public SidePanel() {
         sidePanelComponent = new SidePanelComponent(SCREEN_X, SCREEN_Y);
+        sidePanelComponent.loadImages();
     }
 
     @Override
@@ -29,6 +30,10 @@ public class SidePanel implements GameObject {
 
     public void setScore(int score) {
         sidePanelComponent.setScore(score);
+    }
+
+    public void setLives(int lives) {
+        sidePanelComponent.setLives(lives);
     }
 
     public void setVictory(boolean victory) {

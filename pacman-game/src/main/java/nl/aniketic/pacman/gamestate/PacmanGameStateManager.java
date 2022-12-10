@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
 
 public class PacmanGameStateManager extends GameStateManager {
 
+    private static final int PACMAN_START_COL = 1;
+    private static final int PACMAN_START_ROW = 1;
+
     private PacmanKeyHandler keyListener;
     private int[][] map;
     private MainPanel mainPanel;
@@ -41,6 +44,7 @@ public class PacmanGameStateManager extends GameStateManager {
     private Sound waka;
 
     private int score;
+    private int lives;
     private boolean victory;
     private boolean gameOver;
 
@@ -108,7 +112,8 @@ public class PacmanGameStateManager extends GameStateManager {
         movePacman();
         moveGhosts();
 
-        Rectangle pacmanCollisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), pacman.getScreenX(), pacman.getScreenY());
+        Rectangle pacmanCollisionBody =
+                getCollisionBodyOnPosition(pacman.getCollisionBody(), pacman.getScreenX(), pacman.getScreenY());
         Pellet pellet = getCollisionWithFood(pacmanCollisionBody);
         if (pellet != null) {
             pellet.deactivatePanelComponent();
@@ -129,8 +134,15 @@ public class PacmanGameStateManager extends GameStateManager {
 
         boolean collisionWithGhost = isCollisionWithGhost(pacmanCollisionBody);
         if (collisionWithGhost) {
-            gameOver = true;
-            sidePanel.setGameOver(true);
+            lives--;
+            sidePanel.setLives(lives);
+
+            if (lives < 0) {
+                gameOver = true;
+                sidePanel.setGameOver(true);
+            } else {
+                resetPacman();
+            }
         }
 
         Capsule capsule = getCollisionWithCapsule(pacmanCollisionBody);
@@ -180,10 +192,13 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private void startNewGame() {
         score = 0;
+        lives = 3;
         victory = false;
         gameOver = false;
         sidePanel.setVictory(false);
         sidePanel.setGameOver(false);
+        sidePanel.setScore(score);
+        sidePanel.setLives(lives);
 
         waka = new Sound("/sound/waka.wav");
         map = loadMap("/map/map01.txt");
@@ -203,9 +218,7 @@ public class PacmanGameStateManager extends GameStateManager {
             }
         }
 
-        int col = 1;
-        int row = 1;
-        pacman = new Pacman(col * Pacman.SIZE + Pacman.SIZE / 2, row * Pacman.SIZE + Pacman.SIZE / 2);
+        pacman = createNewPacman();
         pacman.activatePanelComponent();
         gameObjects.add(pacman);
 
@@ -229,6 +242,20 @@ public class PacmanGameStateManager extends GameStateManager {
         }
 
         mainPanel.setMap(map);
+    }
+
+    private Pacman createNewPacman() {
+        return new Pacman(PACMAN_START_COL * Pacman.SIZE + Pacman.SIZE / 2,
+                PACMAN_START_ROW * Pacman.SIZE + Pacman.SIZE / 2);
+    }
+
+    private void resetPacman() {
+        pacman.deactivatePanelComponent();
+        gameObjects.remove(pacman);
+
+        pacman = createNewPacman();
+        pacman.activatePanelComponent();
+        gameObjects.add(pacman);
     }
 
     private Ghost createGhost(int col, int row, GhostType ghostType) {
@@ -374,7 +401,8 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private boolean isCollisionWithGhost(Rectangle collisionBody) {
         for (Ghost ghost : ghosts) {
-            Rectangle ghostCollisionBody = getCollisionBodyOnPosition(ghost.getCollisionBody(), ghost.getScreenX(), ghost.getScreenY());
+            Rectangle ghostCollisionBody =
+                    getCollisionBodyOnPosition(ghost.getCollisionBody(), ghost.getScreenX(), ghost.getScreenY());
             if (collisionBody.intersects(ghostCollisionBody)) {
                 return true;
             }
