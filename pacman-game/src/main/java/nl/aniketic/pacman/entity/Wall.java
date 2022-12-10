@@ -4,7 +4,7 @@ import java.awt.Rectangle;
 
 public class Wall {
 
-    private static final int WALL_SIZE = 20;
+    public static final int WALL_SIZE = 20;
 
     private final int screenX;
     private final int screenY;

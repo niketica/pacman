@@ -6,8 +6,8 @@ import nl.aniketic.engine.sound.Sound;
 import nl.aniketic.pacman.controls.Key;
 import nl.aniketic.pacman.controls.PacmanKeyHandler;
 import nl.aniketic.pacman.entity.Direction;
-import nl.aniketic.pacman.entity.Pellet;
 import nl.aniketic.pacman.entity.Pacman;
+import nl.aniketic.pacman.entity.Pellet;
 import nl.aniketic.pacman.entity.Wall;
 
 import java.awt.Rectangle;
@@ -31,7 +31,6 @@ public class PacmanGameStateManager extends GameStateManager {
     private List<Pellet> pellets;
 
     private Sound waka;
-    private boolean wakaPlaying;
 
     @Override
     protected void startGameState() {
@@ -102,9 +101,15 @@ public class PacmanGameStateManager extends GameStateManager {
                 break;
             case LEFT:
                 potentialX -= Pacman.SPEED;
+                if (potentialX + Pacman.SIZE < 0) {
+                    potentialX = MainPanel.OFFSET_X + Pacman.SIZE + map.length * Wall.WALL_SIZE;
+                }
                 break;
             case RIGHT:
                 potentialX += Pacman.SPEED;
+                if (potentialX > MainPanel.OFFSET_X + map.length * Wall.WALL_SIZE) {
+                    potentialX = -Pacman.SIZE;
+                }
                 break;
             default:
                 System.out.println("Unhandled direction.");
@@ -161,8 +166,8 @@ public class PacmanGameStateManager extends GameStateManager {
 
         walls = new ArrayList<>();
         pellets = new ArrayList<>();
-        for (int row=0; row<map.length; row++) {
-            for (int col=0; col<map[0].length; col++) {
+        for (int row = 0; row < map.length; row++) {
+            for (int col = 0; col < map[0].length; col++) {
                 int value = map[row][col];
                 if (value == 1) {
                     walls.add(new Wall(col, row, MainPanel.OFFSET_X, MainPanel.OFFSET_Y));

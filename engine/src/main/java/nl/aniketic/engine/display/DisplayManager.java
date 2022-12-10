@@ -5,7 +5,7 @@ import java.awt.event.KeyListener;
 
 public final class DisplayManager {
 
-    private static final int SCREEN_WIDTH = 600;
+    private static final int SCREEN_WIDTH = 580;
     private static final int SCREEN_HEIGHT = 800;
     private static GamePanel gamePanel;
 
