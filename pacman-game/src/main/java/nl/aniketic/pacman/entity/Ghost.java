@@ -15,11 +15,14 @@ public class Ghost implements GameObject {
     private Direction direction;
     private final Rectangle collisionBody;
 
+    private GhostState state;
+
     public Ghost(int screenX, int screenY, GhostType ghostType) {
         this.screenX = screenX;
         this.screenY = screenY;
         this.direction = Direction.RIGHT;
-        panelComponent = new GhostPanelComponent(screenX, screenY, ghostType, direction);
+        state = GhostState.SCATTER;
+        panelComponent = new GhostPanelComponent(screenX, screenY, ghostType, direction, state);
         panelComponent.loadImages();
         collisionBody = new Rectangle(1, 1, SIZE - 2, SIZE - 2);
     }
@@ -68,5 +71,10 @@ public class Ghost implements GameObject {
 
     public Rectangle getCollisionBody() {
         return collisionBody;
+    }
+
+    public void setState(GhostState state) {
+        this.state = state;
+        panelComponent.setState(state);
     }
 }

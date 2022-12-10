@@ -5,8 +5,10 @@ import nl.aniketic.engine.gamestate.GameStateManager;
 import nl.aniketic.engine.sound.Sound;
 import nl.aniketic.pacman.controls.Key;
 import nl.aniketic.pacman.controls.PacmanKeyHandler;
+import nl.aniketic.pacman.entity.Capsule;
 import nl.aniketic.pacman.entity.Direction;
 import nl.aniketic.pacman.entity.Ghost;
+import nl.aniketic.pacman.entity.GhostState;
 import nl.aniketic.pacman.entity.GhostType;
 import nl.aniketic.pacman.entity.Pacman;
 import nl.aniketic.pacman.entity.Pellet;
@@ -34,12 +36,16 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private List<Wall> walls;
     private List<Pellet> pellets;
+    private List<Capsule> capsules;
 
     private Sound waka;
 
     private int score;
     private boolean victory;
     private boolean gameOver;
+
+    private final int ghostFrightenedCount = 300;
+    private int currentGhostFrightenedCount = ghostFrightenedCount;
 
     @Override
     protected void startGameState() {
@@ -126,6 +132,25 @@ public class PacmanGameStateManager extends GameStateManager {
             gameOver = true;
             sidePanel.setGameOver(true);
         }
+
+        Capsule capsule = getCollisionWithCapsule(pacmanCollisionBody);
+        if (capsule != null) {
+            capsule.deactivatePanelComponent();
+            capsules.remove(capsule);
+            for (Ghost ghost : ghosts) {
+                ghost.setState(GhostState.FRIGHTENED);
+            }
+            currentGhostFrightenedCount = 0;
+        }
+
+        if (currentGhostFrightenedCount < ghostFrightenedCount) {
+            currentGhostFrightenedCount++;
+            if (currentGhostFrightenedCount >= ghostFrightenedCount) {
+                for (Ghost ghost : ghosts) {
+                    ghost.setState(GhostState.SCATTER);
+                }
+            }
+        }
     }
 
     @Override
@@ -144,6 +169,10 @@ public class PacmanGameStateManager extends GameStateManager {
 
         for (Pellet pellet : pellets) {
             pellet.deactivatePanelComponent();
+        }
+
+        for (Capsule capsule : capsules) {
+            capsule.deactivatePanelComponent();
         }
 
         startNewGame();
@@ -185,10 +214,18 @@ public class PacmanGameStateManager extends GameStateManager {
         ghosts[1] = createGhost(18, 14, GhostType.INKY);
         ghosts[2] = createGhost(8, 14, GhostType.BLINKY);
         ghosts[3] = createGhost(16, 17, GhostType.PINKY);
-
         for (Ghost ghost : ghosts) {
             ghost.activatePanelComponent();
             gameObjects.add(ghost);
+        }
+
+        capsules = new ArrayList<>();
+        capsules.add(createCapsule(1, 3));
+        capsules.add(createCapsule(26, 3));
+        capsules.add(createCapsule(1, 23));
+        capsules.add(createCapsule(26, 23));
+        for (Capsule capsule : capsules) {
+            capsule.activatePanelComponent();
         }
 
         mainPanel.setMap(map);
@@ -198,6 +235,12 @@ public class PacmanGameStateManager extends GameStateManager {
         int ghostX = MainPanel.OFFSET_X + Wall.WALL_SIZE * col;
         int ghostY = MainPanel.OFFSET_Y + Wall.WALL_SIZE * row;
         return new Ghost(ghostX, ghostY, ghostType);
+    }
+
+    private Capsule createCapsule(int col, int row) {
+        int screenX = MainPanel.OFFSET_X + Wall.WALL_SIZE * col + 4;
+        int screenY = MainPanel.OFFSET_Y + Wall.WALL_SIZE * row + 4;
+        return new Capsule(screenX, screenY);
     }
 
     private int[][] loadMap(String filePath) {
@@ -337,6 +380,15 @@ public class PacmanGameStateManager extends GameStateManager {
             }
         }
         return false;
+    }
+
+    private Capsule getCollisionWithCapsule(Rectangle collisionBody) {
+        for (Capsule capsule : capsules) {
+            if (collisionBody.intersects(capsule.getCollisionBody())) {
+                return capsule;
+            }
+        }
+        return null;
     }
 
     private Key getPressedKey() {

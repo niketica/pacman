@@ -18,12 +18,14 @@ public class GhostPanelComponent implements PanelComponent {
 
     private BufferedImage[] images;
     private GhostType ghostType;
+    private GhostState state;
 
-    public GhostPanelComponent(int screenX, int screenY, GhostType ghostType, Direction direction) {
+    public GhostPanelComponent(int screenX, int screenY, GhostType ghostType, Direction direction, GhostState state) {
         this.screenX = screenX;
         this.screenY = screenY;
         this.ghostType = ghostType;
         this.direction = direction;
+        this.state = state;
     }
 
     public void loadImages() {
@@ -60,9 +62,14 @@ public class GhostPanelComponent implements PanelComponent {
 
     @Override
     public void paintComponent(Graphics2D g2) {
-        BufferedImage image = images[ghostType.getImageIndex()];
-        g2.drawImage(image, screenX, screenY, null);
-        drawEyes(g2);
+        if (state == GhostState.FRIGHTENED) {
+            BufferedImage image = images[4];
+            g2.drawImage(image, screenX, screenY, null);
+        } else {
+            BufferedImage image = images[ghostType.getImageIndex()];
+            g2.drawImage(image, screenX, screenY, null);
+            drawEyes(g2);
+        }
     }
 
     private void drawEyes(Graphics2D g2) {
@@ -115,5 +122,9 @@ public class GhostPanelComponent implements PanelComponent {
 
     public void setDirection(Direction direction) {
         this.direction = direction;
+    }
+
+    public void setState(GhostState state) {
+        this.state = state;
     }
 }
