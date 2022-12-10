@@ -1,14 +1,13 @@
 package nl.aniketic.pacman.entity;
 
 import nl.aniketic.engine.gamestate.GameObject;
-import nl.aniketic.pacman.pathfinding.Node;
 
 import java.awt.Rectangle;
 
 public class Ghost implements GameObject {
 
     public static final int SIZE = 20;
-    public static final int SPEED = 1;
+    public static final int SPEED = 2;
 
     private final GhostPanelComponent panelComponent;
     private final Rectangle collisionBody;
@@ -20,8 +19,10 @@ public class Ghost implements GameObject {
     private GhostState state;
     private int currentEatenBobCount;
 
-    private Node previousNode;
-    private Node currentNode;
+    private boolean moving;
+
+    private int destinationX;
+    private int destinationY;
 
     public Ghost(int screenX, int screenY, GhostType ghostType) {
         this.screenX = screenX;
@@ -43,6 +44,21 @@ public class Ghost implements GameObject {
                 panelComponent.updateEatenBobOffset();
             } else {
                 currentEatenBobCount++;
+            }
+        }
+
+        if (moving) {
+            int deltaX = destinationX - screenX;
+            int deltaY = destinationY - screenY;
+
+            if (deltaX == 0 && deltaY == 0) {
+                moving = false;
+            } else {
+                screenX += deltaX;
+                screenY += deltaY;
+
+                panelComponent.setScreenX(screenX);
+                panelComponent.setScreenY(screenY);
             }
         }
     }
@@ -97,16 +113,17 @@ public class Ghost implements GameObject {
         return state;
     }
 
-    public Node getPreviousNode() {
-        return previousNode;
+    public boolean isMoving() {
+        return moving;
     }
 
-    public Node getCurrentNode() {
-        return currentNode;
+    public void setDestinationX(int destinationX) {
+        this.destinationX = destinationX;
+        moving = true;
     }
 
-    public void setCurrentNode(Node currentNode) {
-        this.previousNode = this.currentNode;
-        this.currentNode = currentNode;
+    public void setDestinationY(int destinationY) {
+        this.destinationY = destinationY;
+        moving = true;
     }
 }

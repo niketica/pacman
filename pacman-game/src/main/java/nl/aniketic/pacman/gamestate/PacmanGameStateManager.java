@@ -400,9 +400,9 @@ public class PacmanGameStateManager extends GameStateManager {
         Rectangle collisionBody = getCollisionBodyOnPosition(ghost.getCollisionBody(), potentialX, potentialY);
         boolean collision = isCollisionWithWall(collisionBody);
 
-        if (!collision) {
-            ghost.setScreenX(potentialX);
-            ghost.setScreenY(potentialY);
+        if (!collision && !ghost.isMoving()) {
+            ghost.setDestinationX(potentialX);
+            ghost.setDestinationY(potentialY);
         }
     }
 
