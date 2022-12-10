@@ -17,12 +17,12 @@ public class GhostPanelComponent implements PanelComponent {
     private Direction direction;
 
     private BufferedImage[] images;
-    private GhostColor ghostColor;
+    private GhostType ghostType;
 
-    public GhostPanelComponent(int screenX, int screenY, GhostColor ghostColor, Direction direction) {
+    public GhostPanelComponent(int screenX, int screenY, GhostType ghostType, Direction direction) {
         this.screenX = screenX;
         this.screenY = screenY;
-        this.ghostColor = ghostColor;
+        this.ghostType = ghostType;
         this.direction = direction;
     }
 
@@ -60,7 +60,7 @@ public class GhostPanelComponent implements PanelComponent {
 
     @Override
     public void paintComponent(Graphics2D g2) {
-        BufferedImage image = images[ghostColor.getImageIndex()];
+        BufferedImage image = images[ghostType.getImageIndex()];
         g2.drawImage(image, screenX, screenY, null);
         drawEyes(g2);
     }

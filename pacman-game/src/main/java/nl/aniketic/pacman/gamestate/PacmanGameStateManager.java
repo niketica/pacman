@@ -7,7 +7,7 @@ import nl.aniketic.pacman.controls.Key;
 import nl.aniketic.pacman.controls.PacmanKeyHandler;
 import nl.aniketic.pacman.entity.Direction;
 import nl.aniketic.pacman.entity.Ghost;
-import nl.aniketic.pacman.entity.GhostColor;
+import nl.aniketic.pacman.entity.GhostType;
 import nl.aniketic.pacman.entity.Pacman;
 import nl.aniketic.pacman.entity.Pellet;
 import nl.aniketic.pacman.entity.Wall;
@@ -59,13 +59,10 @@ public class PacmanGameStateManager extends GameStateManager {
     protected void updatePreGameState() {
         Key pressedKey = getPressedKey();
 
-        if (victory) {
-            System.out.println("You won!");
-
+        if (victory || gameOver) {
             if (pressedKey == Key.SPACE) {
                 resetGame();
             }
-
             return;
         }
 
@@ -105,23 +102,29 @@ public class PacmanGameStateManager extends GameStateManager {
         movePacman();
         moveGhosts();
 
-        Rectangle collisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), pacman.getScreenX(), pacman.getScreenY());
-        Pellet pellet = getCollisionWithFood(collisionBody);
+        Rectangle pacmanCollisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), pacman.getScreenX(), pacman.getScreenY());
+        Pellet pellet = getCollisionWithFood(pacmanCollisionBody);
         if (pellet != null) {
+            pellet.deactivatePanelComponent();
+            pellets.remove(pellet);
+            score++;
+            sidePanel.setScore(score);
+
+            if (pellets.isEmpty()) {
+                victory = true;
+                sidePanel.setVictory(true);
+            }
 
             if (!waka.isRunning()) {
                 waka.loadClip();
                 waka.play();
             }
-            score++;
-            sidePanel.setScore(score);
+        }
 
-            pellet.deactivatePanelComponent();
-            pellets.remove(pellet);
-
-            if (pellets.isEmpty()) {
-                victory = true;
-            }
+        boolean collisionWithGhost = isCollisionWithGhost(pacmanCollisionBody);
+        if (collisionWithGhost) {
+            gameOver = true;
+            sidePanel.setGameOver(true);
         }
     }
 
@@ -139,6 +142,10 @@ public class PacmanGameStateManager extends GameStateManager {
             gameObjects.remove(ghost);
         }
 
+        for (Pellet pellet : pellets) {
+            pellet.deactivatePanelComponent();
+        }
+
         startNewGame();
     }
 
@@ -146,6 +153,8 @@ public class PacmanGameStateManager extends GameStateManager {
         score = 0;
         victory = false;
         gameOver = false;
+        sidePanel.setVictory(false);
+        sidePanel.setGameOver(false);
 
         waka = new Sound("/sound/waka.wav");
         map = loadMap("/map/map01.txt");
@@ -172,10 +181,10 @@ public class PacmanGameStateManager extends GameStateManager {
         gameObjects.add(pacman);
 
         ghosts = new Ghost[4];
-        ghosts[0] = createGhost(14, 11, GhostColor.ORANGE);
-        ghosts[1] = createGhost(18, 14, GhostColor.CYAN);
-        ghosts[2] = createGhost(8, 14, GhostColor.RED);
-        ghosts[3] = createGhost(16, 17, GhostColor.PINK);
+        ghosts[0] = createGhost(14, 11, GhostType.CLYDE);
+        ghosts[1] = createGhost(18, 14, GhostType.INKY);
+        ghosts[2] = createGhost(8, 14, GhostType.BLINKY);
+        ghosts[3] = createGhost(16, 17, GhostType.PINKY);
 
         for (Ghost ghost : ghosts) {
             ghost.activatePanelComponent();
@@ -185,10 +194,10 @@ public class PacmanGameStateManager extends GameStateManager {
         mainPanel.setMap(map);
     }
 
-    private Ghost createGhost(int col, int row, GhostColor ghostColor) {
+    private Ghost createGhost(int col, int row, GhostType ghostType) {
         int ghostX = MainPanel.OFFSET_X + Wall.WALL_SIZE * col;
         int ghostY = MainPanel.OFFSET_Y + Wall.WALL_SIZE * row;
-        return new Ghost(ghostX, ghostY, ghostColor);
+        return new Ghost(ghostX, ghostY, ghostType);
     }
 
     private int[][] loadMap(String filePath) {
@@ -322,7 +331,8 @@ public class PacmanGameStateManager extends GameStateManager {
 
     private boolean isCollisionWithGhost(Rectangle collisionBody) {
         for (Ghost ghost : ghosts) {
-            if (collisionBody.intersects(ghost.getCollisionBody())) {
+            Rectangle ghostCollisionBody = getCollisionBodyOnPosition(ghost.getCollisionBody(), ghost.getScreenX(), ghost.getScreenY());
+            if (collisionBody.intersects(ghostCollisionBody)) {
                 return true;
             }
         }

@@ -1,14 +1,14 @@
 package nl.aniketic.pacman.entity;
 
-public enum GhostColor {
-    ORANGE(0),
-    RED(1),
-    CYAN(2),
-    PINK(3);
+public enum GhostType {
+    CLYDE(0),
+    BLINKY(1),
+    INKY(2),
+    PINKY(3);
 
     private final int imageIndex;
 
-    GhostColor(int imageIndex) {
+    GhostType(int imageIndex) {
         this.imageIndex = imageIndex;
     }
 

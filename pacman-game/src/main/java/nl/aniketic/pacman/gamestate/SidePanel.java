@@ -30,4 +30,12 @@ public class SidePanel implements GameObject {
     public void setScore(int score) {
         sidePanelComponent.setScore(score);
     }
+
+    public void setVictory(boolean victory) {
+        sidePanelComponent.setVictory(victory);
+    }
+
+    public void setGameOver(boolean gameOver) {
+        sidePanelComponent.setGameOver(gameOver);
+    }
 }

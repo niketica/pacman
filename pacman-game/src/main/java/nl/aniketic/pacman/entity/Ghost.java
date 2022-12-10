@@ -15,11 +15,11 @@ public class Ghost implements GameObject {
     private Direction direction;
     private final Rectangle collisionBody;
 
-    public Ghost(int screenX, int screenY, GhostColor ghostColor) {
+    public Ghost(int screenX, int screenY, GhostType ghostType) {
         this.screenX = screenX;
         this.screenY = screenY;
         this.direction = Direction.RIGHT;
-        panelComponent = new GhostPanelComponent(screenX, screenY, ghostColor, direction);
+        panelComponent = new GhostPanelComponent(screenX, screenY, ghostType, direction);
         panelComponent.loadImages();
         collisionBody = new Rectangle(1, 1, SIZE - 2, SIZE - 2);
     }
