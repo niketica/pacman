@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class PacmanGameStateManager extends GameStateManager {
@@ -71,35 +72,41 @@ public class PacmanGameStateManager extends GameStateManager {
         if (pressedKey == Key.UP && pacman.getDirection() != Direction.UP) {
             int screenX = pacman.getScreenX();
             int screenY = pacman.getScreenY() - Pacman.SPEED;
-            if (!isCollisionWithWall(screenX, screenY)) {
+            Rectangle collisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), screenX, screenY);
+            if (!isCollisionWithWall(collisionBody)) {
                 pacman.handleUp();
             }
         }
         if (pressedKey == Key.DOWN && pacman.getDirection() != Direction.DOWN) {
             int screenX = pacman.getScreenX();
             int screenY = pacman.getScreenY() + Pacman.SPEED;
-            if (!isCollisionWithWall(screenX, screenY)) {
+            Rectangle collisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), screenX, screenY);
+            if (!isCollisionWithWall(collisionBody)) {
                 pacman.handleDown();
             }
         }
         if (pressedKey == Key.LEFT && pacman.getDirection() != Direction.LEFT) {
             int screenX = pacman.getScreenX() - Pacman.SPEED;
             int screenY = pacman.getScreenY();
-            if (!isCollisionWithWall(screenX, screenY)) {
+            Rectangle collisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), screenX, screenY);
+            if (!isCollisionWithWall(collisionBody)) {
                 pacman.handleLeft();
             }
         }
         if (pressedKey == Key.RIGHT && pacman.getDirection() != Direction.RIGHT) {
             int screenX = pacman.getScreenX() + Pacman.SPEED;
             int screenY = pacman.getScreenY();
-            if (!isCollisionWithWall(screenX, screenY)) {
+            Rectangle collisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), screenX, screenY);
+            if (!isCollisionWithWall(collisionBody)) {
                 pacman.handleRight();
             }
         }
 
         movePacman();
+        moveGhosts();
 
-        Pellet pellet = getCollisionWithFood(pacman.getScreenX(), pacman.getScreenY());
+        Rectangle collisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), pacman.getScreenX(), pacman.getScreenY());
+        Pellet pellet = getCollisionWithFood(collisionBody);
         if (pellet != null) {
 
             if (!waka.isRunning()) {
@@ -165,10 +172,10 @@ public class PacmanGameStateManager extends GameStateManager {
         gameObjects.add(pacman);
 
         ghosts = new Ghost[4];
-        ghosts[0] = createGhost(12, 14, GhostColor.ORANGE);
-        ghosts[1] = createGhost(13, 14, GhostColor.CYAN);
-        ghosts[2] = createGhost(14, 14, GhostColor.RED);
-        ghosts[3] = createGhost(15, 14, GhostColor.PINK);
+        ghosts[0] = createGhost(14, 11, GhostColor.ORANGE);
+        ghosts[1] = createGhost(18, 14, GhostColor.CYAN);
+        ghosts[2] = createGhost(8, 14, GhostColor.RED);
+        ghosts[3] = createGhost(16, 17, GhostColor.PINK);
 
         for (Ghost ghost : ghosts) {
             ghost.activatePanelComponent();
@@ -231,45 +238,95 @@ public class PacmanGameStateManager extends GameStateManager {
             default:
                 System.out.println("Unhandled direction.");
         }
-        boolean collision = isCollisionWithWall(potentialX, potentialY);
+
+        Rectangle collisionBody = getCollisionBodyOnPosition(pacman.getCollisionBody(), potentialX, potentialY);
+        boolean collision = isCollisionWithWall(collisionBody);
         if (!collision) {
             pacman.setScreenX(potentialX);
             pacman.setScreenY(potentialY);
         }
     }
 
-    private boolean isCollisionWithWall(int screenX, int screenY) {
-        Rectangle pacmanCollisionBody = pacman.getCollisionBody();
-        pacmanCollisionBody = new Rectangle(
-                screenX + pacmanCollisionBody.x,
-                screenY + pacmanCollisionBody.y,
-                pacmanCollisionBody.width,
-                pacmanCollisionBody.height);
+    private void moveGhosts() {
+        for (Ghost ghost : ghosts) {
+            moveGhost(ghost);
+        }
+    }
 
+    private void moveGhost(Ghost ghost) {
+        int potentialX = ghost.getScreenX();
+        int potentialY = ghost.getScreenY();
+        switch (ghost.getDirection()) {
+            case UP:
+                potentialY -= Ghost.SPEED;
+                break;
+            case DOWN:
+                potentialY += Ghost.SPEED;
+                break;
+            case LEFT:
+                potentialX -= Ghost.SPEED;
+                if (potentialX + Ghost.SIZE < 0) {
+                    potentialX = MainPanel.OFFSET_X + Ghost.SIZE + map.length * Wall.WALL_SIZE;
+                }
+                break;
+            case RIGHT:
+                potentialX += Ghost.SPEED;
+                if (potentialX > MainPanel.OFFSET_X + map.length * Wall.WALL_SIZE) {
+                    potentialX = -Ghost.SIZE;
+                }
+                break;
+            default:
+                System.out.println("Unhandled direction.");
+        }
+
+        Rectangle collisionBody = getCollisionBodyOnPosition(ghost.getCollisionBody(), potentialX, potentialY);
+        boolean collision = isCollisionWithWall(collisionBody);
+
+        if (collision) {
+            // TODO Add ghost AI - Just random movement for now
+            Random random = new Random();
+            Direction nextDirection = (Direction) Arrays.stream(Direction.values()).toArray()[random.nextInt(4)];
+            ghost.setDirection(nextDirection);
+        } else {
+            ghost.setScreenX(potentialX);
+            ghost.setScreenY(potentialY);
+        }
+    }
+
+    private Rectangle getCollisionBodyOnPosition(Rectangle collisionBody, int screenX, int screenY) {
+        return new Rectangle(
+                screenX + collisionBody.x,
+                screenY + collisionBody.y,
+                collisionBody.width,
+                collisionBody.height);
+    }
+
+    private boolean isCollisionWithWall(Rectangle collisionBody) {
         for (Wall wall : walls) {
             Rectangle wallCollisionBody = wall.getCollisionBody();
-            if (pacmanCollisionBody.intersects(wallCollisionBody)) {
+            if (collisionBody.intersects(wallCollisionBody)) {
                 return true;
             }
         }
         return false;
     }
 
-    private Pellet getCollisionWithFood(int screenX, int screenY) {
-        Rectangle pacmanCollisionBody = pacman.getCollisionBody();
-        pacmanCollisionBody = new Rectangle(
-                screenX + pacmanCollisionBody.x,
-                screenY + pacmanCollisionBody.y,
-                pacmanCollisionBody.width,
-                pacmanCollisionBody.height);
-
+    private Pellet getCollisionWithFood(Rectangle collisionBody) {
         for (Pellet pellet : pellets) {
-            if (pacmanCollisionBody.intersects(pellet.getCollisionBody())) {
+            if (collisionBody.intersects(pellet.getCollisionBody())) {
                 return pellet;
             }
         }
-
         return null;
+    }
+
+    private boolean isCollisionWithGhost(Rectangle collisionBody) {
+        for (Ghost ghost : ghosts) {
+            if (collisionBody.intersects(ghost.getCollisionBody())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Key getPressedKey() {
